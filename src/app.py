@@ -6,24 +6,24 @@ from PIL import Image
 
 app = Flask(__name__)
 
-preprocess = transforms.Compose(
+mean = [0.8316, 0.6671, 0.4760]
+std = [0.1642, 0.2702, 0.3001]
+
+
+transformations = transforms.Compose(
     [
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+        transforms.Normalize((torch.Tensor(mean)), (torch.Tensor(std))),
     ]
 )
 
-# Carregar classes
-with open("src/classes.txt", "r") as f:
-    classes = [line.strip() for line in f.readlines()]
+model_path = "src/model.pth"
 
-# Carregar modelo
-model = models.resnet18(pretrained=False)
-num_features = model.fc.in_features
-model.fc = nn.Linear(num_features, len(classes))
-model.load_state_dict(torch.load("src/modelo.pth"))
-model.eval()
+classes = ["apple", "banana"]
+num_classes = len(classes)
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 @app.route("/predict", methods=["POST"])
@@ -35,21 +35,31 @@ def predict():
 
     try:
         image = Image.open(file)
-        image = image.convert("RGB")
-        image = preprocess(image)
-        image = image.unsqueeze(image, 0)
+        image = transformations(image)
+        image = image.unsqueeze_(0)
 
+        model = models.resnet50()
+        in_features = model.fc.in_features
+        model.fc = torch.nn.Linear(in_features, 3)
+        model.load_state_dict(torch.load(model_path))
+
+        model.to(device)
+        model.eval
         with torch.no_grad():
-            outputs = model(image)
-            _, predicted = torch.max(outputs, 1)
-            class_index = predicted.item()
-            class_name = classes[class_index]
+            output = model(image)
 
-        return jsonify({"class_index": class_index, "class_name": class_name})
+            _, predicted = torch.max(output, 1)
+            class_index = predicted.item()
+
+            predicted_class = classes[class_index]
+
+            print("Classe prevista: ", predicted_class)
+
+        return jsonify({"Alimento": predicted_class})
 
     except Exception as e:
         return jsonify({"error": str(e)})
 
 
 if __name__ == "__main__":
-    app.run(port=5003)
+    app.run(port=5003, debug=True)

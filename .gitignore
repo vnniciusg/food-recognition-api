@@ -6,9 +6,8 @@ __pycache__/
 # C extensions
 *.so
 
-/src/modelo.pth
-/src/classes.txt
 
+model.pth
 
 # Distribution / packaging
 .Python
