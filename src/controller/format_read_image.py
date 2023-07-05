@@ -2,8 +2,6 @@ import torch
 from torchvision import models
 from services.formatImage import convertImage
 
-model_path = "model.pth"
-
 classes = ["Maça", "Banana"]
 num_classes = len(classes)
 
@@ -15,7 +13,8 @@ def analisyImage(image):
     model = models.resnet50()
     in_features = model.fc.in_features
     model.fc = torch.nn.Linear(in_features, 3)
-    model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load("./model/model.pth"))
+    print("Modelo carregado")
 
     model.to(device)
     model.eval()

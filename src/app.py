@@ -1,14 +1,23 @@
 import re
-from flask import Flask, request, jsonify
+from flask import Flask, request, Response, jsonify
 from controller.format_read_image import analisyImage
 from database.db import connection
 from dotenv import load_dotenv
+from flask_cors import CORS
 
 load_dotenv()
 
 collection = connection()
 
 app = Flask(__name__)
+CORS(app)
+
+
+@app.route("/isalive")
+def is_alive():
+    print("/isalive request")
+    status_code = Response(status=200)
+    return status_code
 
 
 @app.route("/predict", methods=["POST"])
@@ -30,4 +39,4 @@ def predict():
 
 
 if __name__ == "__main__":
-    app.run(port=5003, debug=True)
+    app.run(port=8080, host="0.0.0.0", debug=True)
